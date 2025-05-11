@@ -1,0 +1,8 @@
+cff-version: 1.2.0
+title: npm-target-finder
+type: software
+authors:
+  - given-names: Daniel
+    family-names: Heidemann
+repository-code: 'https://github.com/dheidemann/npm-target-finder'
+license: MIT
