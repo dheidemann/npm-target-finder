@@ -1,0 +1,8 @@
+{
+  "dependencies": {
+    "axios": "^1.9.0",
+    "download-counts": "^1.81.1",
+    "get-repository-url": "^2.0.0",
+    "pacote": "^21.0.0"
+  }
+}
