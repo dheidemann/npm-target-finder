@@ -1,16 +1,18 @@
+#!/usr/bin/env python3
+
 import sys
 
 MAX_MAINTAINER_COUNT = 1
 
-MAX_STARS = 100
-MIN_DAILY = 30000
+MAX_STARS = 300
+MIN_DAILY = 40000
 MIN_DAYS_SINCE_COMMIT = 200
 MIN_OPEN_PRS = 20
 MIN_OPEN_ISSUES = 200
 
 def calculate_score(pkg) -> float:
-    if pkg["maintainer_count"] > MAX_MAINTAINER_COUNT:
-        return 0
+    #if pkg["maintainer_count"] > MAX_MAINTAINER_COUNT:
+     #   return 0
 
     def normalize_to(threshold, val, max=False) -> float:
         c = (threshold - val) / threshold
@@ -18,7 +20,7 @@ def calculate_score(pkg) -> float:
 
     return (normalize_to(MAX_STARS, pkg["stars"], True) +
             normalize_to(MIN_DAILY, pkg["avg_daily"]) +
-            normalize_to(MIN_DAYS_SINCE_COMMIT, pkg["days_since_commit"]) +
+            (normalize_to(MIN_DAYS_SINCE_COMMIT, pkg["days_since_commit"])*0.1) +
             normalize_to(MIN_OPEN_PRS, pkg["open_prs"]) +
             normalize_to(MIN_OPEN_ISSUES, pkg["open_issues"]))
 
@@ -64,7 +66,7 @@ def main():
                 print(f"Skipping line due to error: {ve}")
 
     sorted_pkgs = sorted(pkgs, key=lambda pkg: pkg["score"], reverse=True)
-    for pkg in sorted_pkgs[:20]:
+    for pkg in sorted_pkgs:
         print(pkg)
     
 if __name__ == "__main__":

@@ -1,0 +1,30 @@
+#!/usr/bin/env python3
+
+import csv
+import json
+
+input_file = "packages.csv"
+output_file = "flattened_dependencies.csv"
+
+with open(input_file, newline="", encoding="utf-8") as infile, \
+     open(output_file, "w", newline="", encoding="utf-8") as outfile:
+    
+    reader = csv.DictReader(infile)
+    writer = csv.writer(outfile)
+    
+    writer.writerow(["source_pkg", "target_pkg", "maintainer_count", "avg_daily"])
+    
+    for row in reader:
+        source_pkg = row["pkg_name"]
+        maintainer_count = row["maintainer_count"]
+        avg_daily = row["avg_daily"]
+
+        try:
+            dependencies = json.loads(row["dependencies_json"])
+        except json.JSONDecodeError:
+            dependencies = []
+        
+        for dep in dependencies:
+            writer.writerow([source_pkg, dep, maintainer_count, avg_daily])
+
+print(f"Flattened dependencies written to: {output_file}")
