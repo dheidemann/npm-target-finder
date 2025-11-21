@@ -1,4 +1,4 @@
-pkg_name,maintainer_count,gh_days_since_commit,gh_open_prs,gh_open_issues,gh_stars,gh_repo_url
+pkg_name,maintainer_count,daily_pulls,gh_days_since_commit,gh_open_prs,gh_open_issues,gh_stars,gh_repo_url
 readable-stream,3,1486100,123,1,15,1038,https://github.com/nodejs/readable-stream
 glob,1,1444517,17,6,15,8595,https://github.com/isaacs/node-glob
 async,5,1377671,9,5,8,28234,https://github.com/caolan/async
