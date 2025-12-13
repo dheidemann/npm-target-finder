@@ -1,8 +1,13 @@
 {
   "dependencies": {
+    "@octokit/rest": "^19.0.0",
     "axios": "^1.9.0",
+    "csv-parser": "^3.0.0",
     "download-counts": "^1.81.1",
-    "get-repository-url": "^2.0.0",
+    "get-repository-url": "^1.0.1",
+    "node-fetch": "^3.3.2",
+    "p-limit": "^7.2.0",
+    "p-retry": "^5.0.0",
     "pacote": "^21.0.0"
   }
 }

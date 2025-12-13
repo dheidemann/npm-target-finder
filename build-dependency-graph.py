@@ -4,7 +4,7 @@ import csv
 import argparse
 import networkx as nx
 
-def add_nodes_to_graph(g: nx.DiGraph, csv_path):
+def add_nodes_to_graph(g: nx.DiGraph, csv_path, min_avg_daily):
     with open(csv_path, newline="", encoding="utf-8") as f:
         reader = csv.DictReader(f)
         for row in reader:
@@ -14,10 +14,16 @@ def add_nodes_to_graph(g: nx.DiGraph, csv_path):
                 continue
 
             maintainer_count = int(row["maintainer_count"])
-            avg_daily = int(row["avg_daily"])
-            g.add_node(name, maintainer_count=maintainer_count, avg_daily=avg_daily)
+            avg_daily_str = row.get("avg_daily", "") or "0"
+            try:
+                avg_daily = int(float(avg_daily_str))
+            except ValueError:
+                avg_daily = 0
 
-def add_edges_to_graph(g: nx.DiGraph, csv_path):
+            if avg_daily >= min_avg_daily:
+                g.add_node(name, maintainer_count=maintainer_count, avg_daily=avg_daily)
+
+def add_edges_to_graph(g: nx.DiGraph, csv_path, reverse):
     with open(csv_path, newline="", encoding="utf-8") as f:
         reader = csv.DictReader(f)
         for row in reader:
@@ -27,7 +33,9 @@ def add_edges_to_graph(g: nx.DiGraph, csv_path):
                 # skip incomplete rows
                 continue
 
-            g.add_edge(source, target)
+            if source in g and target in g:
+                if reverse: g.add_edge(target, source)
+                else: g.add_edge(source, target)
 
 def main():
     parser = argparse.ArgumentParser(description="Build a NetworkX graph from npm package names and dependency relations.")
@@ -35,12 +43,14 @@ def main():
     parser.add_argument("--nodes", "-n", help="Path to CSV file to build nodes (pkg_name,maintainer_count,avg_daily).")
     parser.add_argument("--out", "-o", default="graph", help="Output graph file name.")
     parser.add_argument("--format", "-f", default="gexf", help="Output graph format.")
+    parser.add_argument("--min_avg_daily", type=int, default=0)
+    parser.add_argument('--reverse', action="store_true")
     args = parser.parse_args()
 
     print("Reading CSV and building graph...")
     G = nx.DiGraph()
-    add_nodes_to_graph(G, args.nodes)
-    add_edges_to_graph(G, args.edges)
+    add_nodes_to_graph(G, args.nodes, args.min_avg_daily)
+    add_edges_to_graph(G, args.edges, args.reverse)
     print(f"Built graph: {G.number_of_nodes()} nodes, {G.number_of_edges()} edges.")
 
     out_path = args.out

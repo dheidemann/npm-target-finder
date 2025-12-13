@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 
 import csv
-import json
 
-input_file = "packages.csv"
-output_file = "flattened_dependencies.csv"
+input_file = "./data/p.csv"
+output_file = "./data/flattened_dependencies.csv"
 
 with open(input_file, newline="", encoding="utf-8") as infile, \
      open(output_file, "w", newline="", encoding="utf-8") as outfile:
@@ -18,11 +17,8 @@ with open(input_file, newline="", encoding="utf-8") as infile, \
         source_pkg = row["pkg_name"]
         maintainer_count = row["maintainer_count"]
         avg_daily = row["avg_daily"]
-
-        try:
-            dependencies = json.loads(row["dependencies_json"])
-        except json.JSONDecodeError:
-            dependencies = []
+        deps = row["dependencies"]
+        dependencies = deps.split("$")
         
         for dep in dependencies:
             writer.writerow([source_pkg, dep, maintainer_count, avg_daily])
