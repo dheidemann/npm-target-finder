@@ -108,7 +108,7 @@ async function main() {
   });
 
   const out = fs.createWriteStream(OUTPUT_FILE, { encoding: "utf8" });
-  let base = ["pkg_name", "maintainer_count", "avg_daily"];
+  let base = ["pkg_name"];
   if (INCLUDE_GITHUB) {
     base.push(
       "days_since_commit",
@@ -149,7 +149,7 @@ async function main() {
       }
     }
 
-    let row = [pkg, maintainerCount, avgDaily];
+    let row = [pkg];
 
     if (INCLUDE_GITHUB) {
       row.push(

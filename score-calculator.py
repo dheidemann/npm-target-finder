@@ -5,10 +5,6 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 import matplotlib.pyplot as plt
 
-# =========================
-# Parameters
-# =========================
-
 PARAMS = {
     "downloads": {"k": 0.6, "m": math.log(500 + 1)},
     "stars": {"k": 0.5, "m": math.log(500 + 1)},
@@ -24,9 +20,9 @@ PARAMS = {
 
 WEIGHTS_PACKAGE = {
     "downloads": 1.0,
-    "commit": 1.0,
+    "commit": 0.6,
     "issues": 0.8,
-    "prs": 0.8,
+    "prs": 2,
     "stars": 0.5,
     "maintainers": 1.2,
 }
@@ -38,10 +34,6 @@ WEIGHTS_USER = {
 
 EPS = 1e-9
 TZ = ZoneInfo("Europe/Berlin")
-
-# =========================
-# Helpers
-# =========================
 
 def logistic(x, k, m):
     return 1.0 / (1.0 + math.exp(-k * (x - m)))
@@ -74,10 +66,6 @@ def geometric_mean(values, weights):
         wsum += w
     return float(prod ** (1.0 / wsum))
 
-# =========================
-# Validation
-# =========================
-
 def valid_package_row(row):
     required = ["pkg_name", "gh_days_since_commit", "avg_daily", "gh_stars"]
     return all(pd.notna(row.get(c)) for c in required)
@@ -89,10 +77,6 @@ def valid_user_row(row):
         pd.notna(row.get(c))
         for c in ["last_activity_at", "last_push_at", "last_contribution_date"]
     )
-
-# =========================
-# User scoring
-# =========================
 
 def score_user(row):
     days = min(
@@ -118,14 +102,10 @@ def score_user(row):
         + WEIGHTS_USER["contributions"] * contrib_score
     )
 
-# =========================
-# Package scoring
-# =========================
-
 def score_package(pkg, maint_score):
     scores = {}
 
-    scores["downloads"] = inv_logistic(
+    scores["downloads"] = logistic(
         safe_log1p(pkg.get("avg_daily", 0)),
         PARAMS["downloads"]["k"],
         PARAMS["downloads"]["m"],
@@ -161,12 +141,7 @@ def score_package(pkg, maint_score):
 
     return geometric_mean(scores, WEIGHTS_PACKAGE)
 
-# =========================
-# Visualization
-# =========================
-
 def visualize(packages):
-    # Distribution
     plt.figure()
     plt.hist(packages["inactivity_score"], bins=30)
     plt.title("Distribution of Package Inactivity Scores")
@@ -174,7 +149,6 @@ def visualize(packages):
     plt.ylabel("Count")
     plt.show()
 
-    # Top 15 most inactive
     top = packages.sort_values("inactivity_score", ascending=False).head(15)
     plt.figure()
     plt.barh(top["pkg_name"], top["inactivity_score"])
@@ -182,10 +156,6 @@ def visualize(packages):
     plt.xlabel("Inactivity Score")
     plt.gca().invert_yaxis()
     plt.show()
-
-# =========================
-# Main
-# =========================
 
 def main():
     packages = pd.read_csv("merged.csv")
@@ -218,7 +188,7 @@ def main():
 
     visualize(packages)
 
-    print("✔ Scoring + visualization complete")
+    print("Scoring + visualization complete")
 
 if __name__ == "__main__":
     main()
