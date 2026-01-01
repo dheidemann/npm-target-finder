@@ -8,20 +8,36 @@ def add_nodes_to_graph(g: nx.DiGraph, csv_path, min_avg_daily):
     with open(csv_path, newline="", encoding="utf-8") as f:
         reader = csv.DictReader(f)
         for row in reader:
-            name = row["pkg_name"]
+            name = row.get("pkg_name")
             if not name:
-                # skip incomplete rows
                 continue
 
-            maintainer_count = int(row["maintainer_count"])
-            avg_daily_str = row.get("avg_daily", "") or "0"
+            attrs = {}
+
+            for key, value in row.items():
+                if key == "pkg_name":
+                    continue
+                if value is None or value == "":
+                    continue
+
+                try:
+                    if "." in value:
+                        coerced = float(value)
+                    else:
+                        coerced = int(value)
+                except ValueError:
+                    coerced = value
+
+                attrs[key] = coerced
+
+            avg_daily = attrs.get("avg_daily", 0)
             try:
-                avg_daily = int(float(avg_daily_str))
-            except ValueError:
+                avg_daily = int(float(avg_daily))
+            except (ValueError, TypeError):
                 avg_daily = 0
 
             if avg_daily >= min_avg_daily:
-                g.add_node(name, maintainer_count=maintainer_count, avg_daily=avg_daily)
+                g.add_node(name, **attrs)
 
 def add_edges_to_graph(g: nx.DiGraph, csv_path, reverse):
     with open(csv_path, newline="", encoding="utf-8") as f:

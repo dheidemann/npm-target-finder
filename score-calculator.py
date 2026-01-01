@@ -20,9 +20,9 @@ PARAMS = {
 
 WEIGHTS_PACKAGE = {
     "downloads": 1.0,
-    "commit": 0.6,
-    "issues": 0.8,
-    "prs": 2,
+    "commit": 0.4,
+    "issues": 2,
+    "prs": 1.3,
     "stars": 0.5,
     "maintainers": 1.2,
 }
@@ -176,13 +176,13 @@ def main():
     packages = packages.merge(maint_scores, on="pkg_name", how="left")
     packages["maintainers_score"] = packages["maintainers_score"].fillna(1.0)
 
-    print(packages.head(2))
     packages["inactivity_score"] = packages.apply(
     lambda r: score_package(r, r["maintainers_score"]),
     axis=1,
-)
+    )
 
-    packages.sort_values("inactivity_score", ascending=False).to_csv(
+    cols = ["pkg_name", "inactivity_score", "maintainers_score"]
+    packages.sort_values("inactivity_score", ascending=False)[cols].to_csv(
         "package_scores.csv", index=False
     )
 
