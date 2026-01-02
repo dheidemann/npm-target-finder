@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 
 if (process.argv.length < 4) {
-  console.error('Usage: node github-avg-open-times.js input.csv output.csv [--token=PAT]');
+  console.error('Usage: node fetch-gh-avg-open.js input.csv output.csv [--token=PAT]');
   process.exit(2);
 }
 

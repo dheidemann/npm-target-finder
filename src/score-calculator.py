@@ -1,4 +1,5 @@
 import pandas as pd
+import argparse
 import numpy as np
 import math
 from datetime import datetime
@@ -158,8 +159,14 @@ def visualize(packages):
     plt.show()
 
 def main():
-    packages = pd.read_csv("merged.csv")
-    users = pd.read_csv("data/users.csv")
+    parser = argparse.ArgumentParser(description="Calculate atackability scores.")
+    parser.add_argument("-p", help="Path to packages file")
+    parser.add_argument("-u", help="Path to users file")
+    parser.add_argument("-o", help="Output file")
+    args = parser.parse_args()
+
+    packages = pd.read_csv(args.p)
+    users = pd.read_csv(args.u)
 
     packages = packages[packages.apply(valid_package_row, axis=1)]
     users = users[users.apply(valid_user_row, axis=1)]
@@ -183,7 +190,7 @@ def main():
 
     cols = ["pkg_name", "inactivity_score", "maintainers_score"]
     packages.sort_values("inactivity_score", ascending=False)[cols].to_csv(
-        "package_scores.csv", index=False
+        args.o, index=False
     )
 
     visualize(packages)

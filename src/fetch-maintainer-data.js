@@ -1,39 +1,14 @@
-/*
-Node.js script: github_contributors_maintainers.js
-
-What it does:
-1) Reads input CSV with columns: gh_repo_url, pkg_name
-2) For each repo: fetches top 3 contributors (by contributions) from GitHub REST API
-3) For each package: fetches maintainers from npm registry (tries npm, then PyPI as fallback)
-4) For each unique GitHub username (contributors + maintainers if they are GH usernames), fetches profile/contribution stats via getGitHubStats (GraphQL) and re-uses cached results so each username is fetched only once
-5) Handles GitHub rate limits by checking response headers and automatically waiting until reset if needed
-6) Writes an output CSV with a row per (repo, pkg, username, roles, contributionsCountIfAny, and profile stats)
-
-Usage:
-  - Requires Node 18+ (fetch is global). If using older Node, install node-fetch and adapt.
-  - Set environment variable GITHUB_TOKEN with a personal access token that has access to read public repos (no special scopes usually required).
-  - Run: node github_contributors_maintainers.js input.csv output.csv
-
-Limitations / assumptions:
-  - pkg_name is assumed to be an npm package name. The script attempts npm first; if not found it will try PyPI.
-  - Input CSV parsing supports quoted fields and commas inside quotes; header row required.
-  - This script does not install any external Node packages.
-*/
-
 import fs from 'fs/promises';
 import path from 'path';
 
-// -------------------- Configuration --------------------
 const GITHUB_API_REST = 'https://api.github.com';
 const GITHUB_API_GRAPHQL = 'https://api.github.com/graphql';
 const NPM_REGISTRY = 'https://registry.npmjs.org';
 const PYPI_REGISTRY = 'https://pypi.org/pypi';
-const MAX_CONTRIBUTORS = 3; // number of top contributors to get
-const GH_RATE_LIMIT_THRESHOLD = 5; // if remaining requests <= this, wait until reset
+const MAX_CONTRIBUTORS = 3;
+const GH_RATE_LIMIT_THRESHOLD = 5;
 
-// -------------------- Helpers --------------------
 function parseCsv(text) {
-  // Basic CSV parser with support for quoted fields and commas inside quotes.
   const lines = [];
   let cur = '';
   let inQuotes = false;
@@ -41,7 +16,7 @@ function parseCsv(text) {
   for (let i = 0; i < text.length; i++) {
     const ch = text[i];
     if (ch === '"') {
-      if (inQuotes && text[i + 1] === '"') { // escaped quote
+      if (inQuotes && text[i + 1] === '"') {
         cur += '"';
         i++;
       } else {
@@ -51,8 +26,7 @@ function parseCsv(text) {
       row.push(cur);
       cur = '';
     } else if ((ch === '\n' || ch === '\r') && !inQuotes) {
-      // handle CRLF
-      if (ch === '\r' && text[i + 1] === '\n') continue; // will be handled when \n comes
+      if (ch === '\r' && text[i + 1] === '\n') continue;
       row.push(cur);
       lines.push(row);
       row = [];
@@ -61,12 +35,10 @@ function parseCsv(text) {
       cur += ch;
     }
   }
-  // push last cell
   if (cur !== '' || row.length > 0) {
     row.push(cur);
     lines.push(row);
   }
-  // trim possible empty trailing line
   if (lines.length && lines[lines.length - 1].length === 1 && lines[lines.length - 1][0] === '') {
     lines.pop();
   }
@@ -80,7 +52,7 @@ function csvToObjects(csvText) {
   const objs = [];
   for (let i = 1; i < rows.length; i++) {
     const r = rows[i];
-    if (r.length === 1 && r[0] === '') continue; // skip empty
+    if (r.length === 1 && r[0] === '') continue;
     const obj = {};
     for (let j = 0; j < header.length; j++) {
       obj[header[j]] = r[j] !== undefined ? r[j].trim() : '';
@@ -104,7 +76,6 @@ function sleep(ms) {
 }
 
 function parseGitHubRepoUrl(url) {
-  // accepts URLs like: https://github.com/owner/repo or git@github.com:owner/repo.git
   try {
     if (url.startsWith('git@')) {
       const parts = url.split(':')[1].replace(/\.git$/, '').split('/');
@@ -118,24 +89,22 @@ function parseGitHubRepoUrl(url) {
   }
 }
 
-// -------------------- GitHub helpers --------------------
 async function checkAndHandleRateLimit(resp) {
-  // For both REST and GraphQL, GitHub usually provides X-RateLimit-* headers
   const remaining = resp.headers.get('x-ratelimit-remaining');
   const reset = resp.headers.get('x-ratelimit-reset');
   if (remaining !== null && reset !== null) {
     const rem = parseInt(remaining, 10);
-    const resetTs = parseInt(reset, 10) * 1000; // header is seconds
+    const resetTs = parseInt(reset, 10) * 1000;
     if (!isNaN(rem) && !isNaN(resetTs)) {
       if (rem <= GH_RATE_LIMIT_THRESHOLD) {
-        const wait = Math.max(0, resetTs - Date.now()) + 1000; // add 1s slack
+        const wait = Math.max(0, resetTs - Date.now()) + 1000;
         console.log(`Rate limit low (remaining=${rem}). Sleeping for ${Math.ceil(wait/1000)}s until reset...`);
         await sleep(wait);
-        return true; // we waited
+        return true;
       }
     }
   }
-  return false; // nothing done
+  return false;
 }
 
 async function githubRest(path, token, params = {}) {
@@ -155,7 +124,6 @@ async function githubRest(path, token, params = {}) {
   return resp.json();
 }
 
-// -------------------- getGitHubStats (GraphQL) --------------------
 function findLastContributionDate(weeks) {
   for (let i = weeks.length - 1; i >= 0; i--) {
     const days = weeks[i].contributionDays;
@@ -218,13 +186,10 @@ async function getGitHubStats(username, token) {
   return stats;
 }
 
-// -------------------- Contributors & maintainers --------------------
 async function getTopContributors(owner, repo, token, topN = MAX_CONTRIBUTORS) {
-  // Uses REST endpoint to list contributors (includes anonymous when available)
   try {
     const contributors = await githubRest(`/repos/${owner}/${repo}/contributors`, token, { per_page: 100 });
     if (!Array.isArray(contributors)) return [];
-    // sort by contributions desc and take topN
     const sorted = contributors.sort((a, b) => (b.contributions || 0) - (a.contributions || 0));
     const sliced = sorted.slice(0, topN).map(c => ({ login: c.login, contributions: c.contributions }));
     return sliced;
@@ -242,7 +207,6 @@ async function getNpmMaintainers(pkgName) {
     if (!resp.ok) throw new Error(`NPM registry returned ${resp.status}`);
     const data = await resp.json();
     if (Array.isArray(data.maintainers)) {
-      // maintainers have {name, email}
       return data.maintainers.map(m => ({ name: m.name, email: m.email }));
     }
     return null;
@@ -259,7 +223,6 @@ async function getPypiMaintainers(pkgName) {
     if (resp.status === 404) return null;
     if (!resp.ok) throw new Error(`PyPI registry returned ${resp.status}`);
     const data = await resp.json();
-    // PyPI doesn't expose maintainers in the same way; try info.author / info.maintainer
     const info = data.info || {};
     const candidates = [];
     if (info.author) candidates.push({ name: info.author, email: info.author_email || '' });
@@ -271,7 +234,6 @@ async function getPypiMaintainers(pkgName) {
   }
 }
 
-// -------------------- Main flow --------------------
 async function main() {
   const token = process.env.GITHUB_TOKEN;
   if (!token) {
@@ -281,7 +243,7 @@ async function main() {
 
   const args = process.argv.slice(2);
   if (args.length < 2) {
-    console.error('Usage: node github_contributors_maintainers.js input.csv output.csv');
+    console.error('Usage: node fetch-maintainer-data.js input.csv output.csv');
     process.exit(1);
   }
   const [inputPath, outputPath] = args;
@@ -289,10 +251,8 @@ async function main() {
   const inputCsv = await fs.readFile(path.resolve(inputPath), 'utf8');
   const rows = csvToObjects(inputCsv);
 
-  // cache for user stats: username -> stats
   const userCache = new Map();
 
-  // We'll build output rows as objects, then write CSV
   const outputRows = [];
 
   for (const row of rows) {
@@ -310,10 +270,8 @@ async function main() {
     const { owner, repo } = parsed;
     console.log(`Processing ${owner}/${repo}  (pkg: ${pkgName})`);
 
-    // contributors
     const contributors = await getTopContributors(owner, repo, token, MAX_CONTRIBUTORS);
 
-    // maintainers: try npm, then PyPI
     let maintainers = null;
     if (pkgName) {
       maintainers = await getNpmMaintainers(pkgName);
@@ -322,11 +280,7 @@ async function main() {
       }
     }
 
-    // convert maintainers into a list of candidate GitHub usernames if possible
-    // NPM maintainer 'name' is often a npm username which may be the same as GitHub login but not guaranteed.
-    // We'll treat maintainer.name as a candidate GitHub login and attempt to fetch stats for it; if it doesn't exist we'll ignore.
-
-    const roleMap = new Map(); // username -> { roles: Set, contributions }
+    const roleMap = new Map();
 
     for (const c of contributors) {
       if (!c.login) continue;
@@ -346,10 +300,8 @@ async function main() {
       }
     }
 
-    // For each username in roleMap, fetch stats (cached)
     for (const [username, info] of roleMap.entries()) {
       if (!userCache.has(username)) {
-        // try fetch stats -- if 404 or no user, store null to avoid retry
         try {
           const stats = await getGitHubStats(username, token);
           if (!stats) {
@@ -378,11 +330,9 @@ async function main() {
       });
     }
 
-    // Small pause between repositories to be polite (and reduce bursts)
     await sleep(500);
   }
 
-  // write CSV
   const header = ['repo_full','repo_url','pkg_name','username','roles','contributions_count','totalContributions','lastActivityAt','lastPushAt','lastContributionDate'];
   const csvLines = [header.map(escapeCsvCell).join(',')];
   for (const r of outputRows) {
@@ -393,7 +343,6 @@ async function main() {
   console.log(`Wrote ${outputRows.length} rows to ${outputPath}`);
 }
 
-// Run
 main().catch(err => {
   console.error('Fatal error:', err);
   process.exit(1);

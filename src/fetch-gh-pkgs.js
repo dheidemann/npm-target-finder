@@ -25,7 +25,6 @@ const OUTPUT_FILE = getFlagValue(
 const DAILY_THRESHOLD = Number(getFlagValue("--threshold", "1000"));
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN || "";
 
-// sleep until given timestamp
 function sleepUntil(resetTimestamp) {
   const delay = resetTimestamp * 1000 - Date.now();
   return delay > 0
@@ -33,7 +32,6 @@ function sleepUntil(resetTimestamp) {
     : Promise.resolve();
 }
 
-// axios wrapper to handle github rate limits
 async function ghGet(url, config = {}) {
   const authHeader = GITHUB_TOKEN.startsWith("github_pat_")
     ? { Authorization: `Bearer ${GITHUB_TOKEN}` }
