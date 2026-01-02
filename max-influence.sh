@@ -5,7 +5,6 @@ set -euo pipefail
 python -m venv venv
 source venv/bin/activate
 pip install -r src/requirements.txt
-pip install PyQt6
 
 python src/flatten-dependencies.py -i data/packages.csv -o data/flattened_dependencies.csv
 python src/merge.py --identifier pkg_name --paths data/packages.csv,data/scores.csv --sort_by inactivity_score --output data/all_pkg_max_infl.csv

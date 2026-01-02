@@ -24,11 +24,12 @@ Reads package data from a file, calculates a score for each package based on def
 ## `max-influence.sh`
 **Requires**: `g++`, `python3`
 
+> [!TIP]
+> To visually explore the graph or do different computations you can manually generate the graph by simply running `./src/build-dependency-graph.py -e data/flattened_dependencies.csv -n data/all_pkg_max_infl.csv --min_avg_daily 1000 --reverse`. Providing the `min_avg_daily` flag drastically reduces the graph size to the more relevant ones. This is especially good if you want to visualize the dependency graph.
+
 ```bash
 ./max-influence.sh
 ```
 
-# Latest results (02.01.26)
-```bash
+# Latest results from maximum influence algorithm (02.01.26)
 Optimal Seeds: @ngxvoice/ngx-voicelistner @rstacruz/pnpm big-bertha cordova-plugin-amplify-payment fhir2 merino primeng-custom react-native-ok-sdk search-list-react wc-starterkit
-```
