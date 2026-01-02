@@ -4,3 +4,4 @@ package-lock.json
 *.gexf
 merged.csv
 __pycache__/
+bin/
