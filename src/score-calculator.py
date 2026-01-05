@@ -7,7 +7,7 @@ from zoneinfo import ZoneInfo
 import matplotlib.pyplot as plt
 
 PARAMS = {
-    "downloads": {"k": 0.6, "m": math.log(500 + 1)},
+    "downloads": {"k": 0.6, "m": math.log(10000 + 1)},
     "stars": {"k": 0.5, "m": math.log(500 + 1)},
     "commit_days": {"k": 0.05, "m": 120},
     "issue_close": {"k": 0.9, "m": math.log(72 + 1)},
@@ -20,12 +20,12 @@ PARAMS = {
 }
 
 WEIGHTS_PACKAGE = {
-    "downloads": 1.0,
-    "commit": 0.4,
-    "issues": 2,
-    "prs": 1.3,
-    "stars": 0.5,
-    "maintainers": 1.2,
+    "downloads": 1,
+    "commit": 0.2,
+    "issues": 0.15,
+    "prs": 0.15,
+    "stars": 0.3,
+    "maintainers": 0.2,
 }
 
 WEIGHTS_USER = {

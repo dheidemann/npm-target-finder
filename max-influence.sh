@@ -12,4 +12,4 @@ python src/build-dependency-graph.py -e data/flattened_dependencies.csv -n data/
 
 mkdir -p bin
 g++ -O3 -fopenmp src/weighted_max_influence.cc -o bin/influence
-./bin/influence data/graph.gexf 10 inactivity_score
+./bin/influence data/graph.gexf 20 inactivity_score
