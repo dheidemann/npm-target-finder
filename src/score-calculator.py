@@ -25,7 +25,7 @@ WEIGHTS_PACKAGE = {
     "issues": 0.15,
     "prs": 0.15,
     "stars": 0.3,
-    "maintainers": 0.2,
+    "maintainers": 0.8,
 }
 
 WEIGHTS_USER = {
@@ -145,17 +145,18 @@ def score_package(pkg, maint_score):
 def visualize(packages):
     plt.figure()
     plt.hist(packages["inactivity_score"], bins=30)
-    plt.title("Distribution of Package Inactivity Scores")
-    plt.xlabel("Inactivity Score")
+    plt.title("Distribution of Package Attackability Scores")
+    plt.xlabel("Attackability Score")
     plt.ylabel("Count")
     plt.show()
 
     top = packages.sort_values("inactivity_score", ascending=False).head(15)
     plt.figure()
     plt.barh(top["pkg_name"], top["inactivity_score"])
-    plt.title("Top 15 Most Inactive Packages")
-    plt.xlabel("Inactivity Score")
+    plt.title("Top 15 most attackable packages")
+    plt.xlabel("Attackability Score")
     plt.gca().invert_yaxis()
+    plt.tight_layout()
     plt.show()
 
 def main():
