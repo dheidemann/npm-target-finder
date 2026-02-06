@@ -1,62 +1,56 @@
 The goal is to find packages that are sitting unnoticed deep down the dependency tree and are therefore potential targets for supply chain attacks.
 
-`npm-target-finder` is essentially a combination of two simple scripts:
-
-## `getter.js`
-Fetches npm packages with an upstream github url and parse metadata in `packages.txt`:
-- Package name
-- Maintainer count
-- Average daily pulls
-- Days since last github commit
-- Open PRs count
-- Open Issues count
-- Github star count
-
-In the script you can define a threshold for minimal daily pulls. It is set to 1000 per default.
-
-## `score-calculator.py`
-Reads package data from a file, calculates a score for each package based on defined thresholds for stars, daily average activity, recent commits, open pull requests, and open issues, and then outputs the top 20 packages sorted by their scores.
-
-To configure the script, adjust the threshold values at the top.
-
-# Installation
+`npm-target-finder` is essentially a combination of three scripts to fetch data and evaluate the results:
 
 > [!TIP]
-> Last time I ran this script it took approximately 5h to get the packages you can find in `packages.txt`. If you just want to play with the scores I suggest to use the python script below on the provided `packages.txt`.
+> All my gathered and processed data lays in this repo. The scripts are therefore usable in no particular order. The data partially gets overwritten when you execute one of the scripts. To restore original data use `git restore <file>`.
 
-`getter.js`
+## `getter.sh`
+**Requires**: `node`
+
+Fetches package statistics from GitHub and NPM as well as contributor statitistics from packages with GitHub upstream. Provide a personal access token (pat) from GitHub to increase the rate limit.
 ```bash
-npm i
-export GITHUB_TOKEN=gh_XXXXX # optional: provide a gh-token for higher rate limits
-node getter.js
+./getter.sh pat_xxxx
 ```
 
-`score-calculator.py`
+## `score-calculator.sh`
+**Requires**: `python3`
+
+Reads package data from a file, calculates a score for each package based on defined thresholds for stars, daily average activity, recent commits, open pull requests etc. To modify the scoring values and weights, please refer to [src/score-calculator.py](src/score-calculator.py).
 ```bash
-python3 score-calculator.py packages.txt
+./score-calculator.sh
 ```
 
-# Latest results (11.05.25)
+## `max-influence.sh`
+**Requires**: `g++`, `python3`
+
+> [!TIP]
+> To visually explore the graph or do different computations you can manually generate the graph by simply running `./src/build-dependency-graph.py -e data/flattened_dependencies.csv -n data/all_pkg_max_infl.csv --min_avg_daily 1000 --reverse`. Providing the `min_avg_daily` flag drastically reduces the graph size to the more relevant ones. This is especially good if you want to visualize the dependency graph.
+
 ```bash
-{'pkg': 'inherits', 'maintainer_count': 1, 'avg_daily': 1078414, 'days_since_commit': 571, 'open_prs': 2, 'open_issues': 4, 'stars': 353, 'repo_url': 'https://github.com/isaacs/inherits', 'score': 37.392133333333334}
-{'pkg': 'isarray', 'maintainer_count': 1, 'avg_daily': 1026857, 'days_since_commit': 198, 'open_prs': 1, 'open_issues': 1, 'stars': 133, 'repo_url': 'https://github.com/juliangruber/isarray', 'score': 35.94356666666667}
-{'pkg': 'isstream', 'maintainer_count': 1, 'avg_daily': 383899, 'days_since_commit': 3419, 'open_prs': 0, 'open_issues': 1, 'stars': 63, 'repo_url': 'https://github.com/rvagg/isstream', 'score': 31.26663333333333}
-{'pkg': 'graceful-readlink', 'maintainer_count': 1, 'avg_daily': 392365, 'days_since_commit': 3055, 'open_prs': 0, 'open_issues': 0, 'stars': 9, 'repo_url': 'https://github.com/zhiyelee/graceful-readlink', 'score': 30.263833333333334}
-{'pkg': 'util-deprecate', 'maintainer_count': 1, 'avg_daily': 482551, 'days_since_commit': 2372, 'open_prs': 0, 'open_issues': 1, 'stars': 38, 'repo_url': 'https://github.com/TooTallNate/util-deprecate', 'score': 29.570033333333335}
-{'pkg': 'mkdirp', 'maintainer_count': 1, 'avg_daily': 781527, 'days_since_commit': 602, 'open_prs': 0, 'open_issues': 1, 'stars': 193, 'repo_url': 'https://github.com/isaacs/node-mkdirp', 'score': 29.135899999999996}
-{'pkg': 'imurmurhash', 'maintainer_count': 1, 'avg_daily': 196020, 'days_since_commit': 4276, 'open_prs': 0, 'open_issues': 0, 'stars': 99, 'repo_url': 'https://github.com/jensyt/imurmurhash-js', 'score': 28.924}
-{'pkg': 'is-property', 'maintainer_count': 1, 'avg_daily': 308028, 'days_since_commit': 3285, 'open_prs': 1, 'open_issues': 1, 'stars': 13, 'repo_url': 'https://github.com/mikolalysenko/is-property', 'score': 28.6176}
-{'pkg': 'process-nextick-args', 'maintainer_count': 1, 'avg_daily': 481813, 'days_since_commit': 2151, 'open_prs': 0, 'open_issues': 2, 'stars': 32, 'repo_url': 'https://github.com/calvinmetcalf/process-nextick-args', 'score': 28.50543333333334}
-{'pkg': 'pinkie-promise', 'maintainer_count': 1, 'avg_daily': 433151, 'days_since_commit': 2545, 'open_prs': 1, 'open_issues': 2, 'stars': 117, 'repo_url': 'https://github.com/floatdrop/pinkie-promise', 'score': 28.05336666666667}
-{'pkg': 'is-posix-bracket', 'maintainer_count': 1, 'avg_daily': 285728, 'days_since_commit': 3322, 'open_prs': 0, 'open_issues': 0, 'stars': 13, 'repo_url': 'https://github.com/jonschlinkert/is-posix-bracket', 'score': 28.004266666666666}
-{'pkg': 'buffer-shims', 'maintainer_count': 1, 'avg_daily': 302514, 'days_since_commit': 3118, 'open_prs': 0, 'open_issues': 2, 'stars': 12, 'repo_url': 'https://github.com/calvinmetcalf/buffer-shims', 'score': 27.5638}
-{'pkg': 'xtend', 'maintainer_count': 1, 'avg_daily': 595456, 'days_since_commit': 1734, 'open_prs': 0, 'open_issues': 0, 'stars': 305, 'repo_url': 'https://github.com/Raynos/xtend', 'score': 27.468533333333333}
-{'pkg': 'jodid25519', 'maintainer_count': 1, 'avg_daily': 260861, 'days_since_commit': 3390, 'open_prs': 0, 'open_issues': 1, 'stars': 34, 'repo_url': 'https://github.com/meganz/jodid25519', 'score': 27.310366666666663}
-{'pkg': 'pinkie', 'maintainer_count': 1, 'avg_daily': 430655, 'days_since_commit': 2454, 'open_prs': 0, 'open_issues': 2, 'stars': 139, 'repo_url': 'https://github.com/floatdrop/pinkie', 'score': 27.245166666666666}
-{'pkg': 'preserve', 'maintainer_count': 1, 'avg_daily': 288472, 'days_since_commit': 3149, 'open_prs': 0, 'open_issues': 0, 'stars': 14, 'repo_url': 'https://github.com/jonschlinkert/preserve', 'score': 27.22073333333333}
-{'pkg': 'core-util-is', 'maintainer_count': 1, 'avg_daily': 583275, 'days_since_commit': 1348, 'open_prs': 0, 'open_issues': 3, 'stars': 103, 'repo_url': 'https://github.com/isaacs/core-util-is', 'score': 27.167499999999997}
-{'pkg': 'once', 'maintainer_count': 1, 'avg_daily': 710970, 'days_since_commit': 578, 'open_prs': 0, 'open_issues': 2, 'stars': 222, 'repo_url': 'https://github.com/isaacs/once', 'score': 26.379000000000005}
-{'pkg': 'mimeparse', 'maintainer_count': 1, 'avg_daily': 6467, 'days_since_commit': 4853, 'open_prs': 0, 'open_issues': 0, 'stars': 12, 'repo_url': 'https://github.com/kriskowal/mimeparse', 'score': 26.360566666666667}
-{'pkg': 'strip-bom', 'maintainer_count': 1, 'avg_daily': 531743, 'days_since_commit': 1484, 'open_prs': 0, 'open_issues': 0, 'stars': 111, 'repo_url': 'https://github.com/sindresorhus/strip-bom', 'score': 26.03476666666667}
+./max-influence.sh
 ```
 
+# Latest results from maximum influence algorithm (02.01.26)
+```bash
+omni-common-ui (Val: 0.259505) | Marginal Gain: 5.95825 | Total Weighted Reach: 5.95825
+gatsby (Val: 0.150692) | Marginal Gain: 4.31177 | Total Weighted Reach: 10.27
+ember-cli (Val: 0.240798) | Marginal Gain: 3.40759 | Total Weighted Reach: 13.6776
+simplyimport (Val: 0.536446) | Marginal Gain: 3.43395 | Total Weighted Reach: 17.1116
+lerna (Val: 0.189325) | Marginal Gain: 2.69288 | Total Weighted Reach: 19.8044
+browserify (Val: 0.552429) | Marginal Gain: 2.65603 | Total Weighted Reach: 22.4605
+metro-bundler (Val: 0.157122) | Marginal Gain: 2.13659 | Total Weighted Reach: 24.5971
+typings-core (Val: 0.57681) | Marginal Gain: 2.03638 | Total Weighted Reach: 26.6334
+composer-rest-server (Val: 0.533018) | Marginal Gain: 2.05135 | Total Weighted Reach: 28.6848
+sails (Val: 0.2888) | Marginal Gain: 1.94432 | Total Weighted Reach: 30.6291
+gcloud (Val: 0.173477) | Marginal Gain: 2.00149 | Total Weighted Reach: 32.6306
+react-styleguidist (Val: 0.26148) | Marginal Gain: 1.90455 | Total Weighted Reach: 34.5351
+firebase-tools (Val: 0.179346) | Marginal Gain: 1.91501 | Total Weighted Reach: 36.4501
+@kadira/storybook (Val: 0.1599) | Marginal Gain: 1.85237 | Total Weighted Reach: 38.3025
+spincycle (Val: 0.442704) | Marginal Gain: 1.81344 | Total Weighted Reach: 40.116
+laravel-elixir (Val: 0.398485) | Marginal Gain: 1.7407 | Total Weighted Reach: 41.8567
+gitbook (Val: 0.132704) | Marginal Gain: 1.75707 | Total Weighted Reach: 43.6137
+node-libs-browser (Val: 0.645156) | Marginal Gain: 1.76318 | Total Weighted Reach: 45.3769
+gulp-util (Val: 0.631826) | Marginal Gain: 1.6164 | Total Weighted Reach: 46.9933
+postcss-cssnext (Val: 0.436623) | Marginal Gain: 1.65652 | Total Weighted Reach: 48.6498
+```

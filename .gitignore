@@ -1,2 +1,7 @@
 node_modules/
 package-lock.json
+.ipynb_checkpoints/
+*.gexf
+merged.csv
+__pycache__/
+bin/
