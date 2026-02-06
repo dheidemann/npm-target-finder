@@ -55,6 +55,7 @@ public:
   int num_nodes() const { return (int)reverse_id_map.size(); }
 };
 
+// please dont judge
 class GEXFParser {
 public:
   static Graph parse(const std::string &filename,
